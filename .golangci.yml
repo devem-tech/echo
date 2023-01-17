@@ -1,0 +1,9 @@
+linters:
+  enable-all: true
+  disable:
+    - exhaustivestruct
+    - exhaustruct
+
+linters-settings:
+  varnamelen:
+    ignore-names: [ e, fn, h, i, r, sb, tt, u, v, vv, w, x ]
