@@ -1,0 +1,9 @@
+{
+  "/v1/orders": {
+    "success": true
+  },
+  "/v1/orders/1": {
+    "id": 1,
+    "status": "confirmed"
+  }
+}
