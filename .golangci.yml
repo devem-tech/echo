@@ -1,0 +1,12 @@
+linters:
+  enable-all: true
+
+linters-settings:
+  varnamelen:
+    min-name-length: 1
+  depguard:
+    rules:
+      main:
+        allow:
+          - $gostd # matches all of go's standard library
+          - github.com/devem-tech/echo

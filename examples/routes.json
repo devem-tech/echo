@@ -1,0 +1,30 @@
+{
+  "*": "https://jsonplaceholder.typicode.com",
+  "/todos/1": {
+    "id": 1,
+    "userId": 1,
+    "title": "default",
+    "completed": false
+  },
+  "POST:201:/v1/orders": {
+    "success": true
+  },
+  "GET:/v1/orders": [
+    {
+      "id": 1,
+      "status": "confirmed"
+    },
+    {
+      "id": 2,
+      "status": "paid"
+    }
+  ],
+  "GET:/v1/orders/1": {
+    "id": 1,
+    "status": "confirmed"
+  },
+  "GET:/v1/orders/2": {
+    "id": 2,
+    "status": "paid"
+  }
+}
