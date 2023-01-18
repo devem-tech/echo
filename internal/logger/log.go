@@ -5,25 +5,29 @@ import (
 	"os"
 	"time"
 
-	"github.com/devemio/mockio/pkg/color"
+	"github.com/devemio/mockio/internal/color"
 )
 
-type Log struct{}
+type Log struct {
+	c *color.Color
+}
 
-func New() *Log {
-	return &Log{}
+func New(noColors bool) *Log {
+	return &Log{
+		c: color.New(!noColors),
+	}
 }
 
 func (l *Log) Debug(format string, v ...any) {
-	fmt.Println(color.LightGray(l.t()+" [DEBUG]"), color.LightGray(fmt.Sprintf(format, v...)))
+	fmt.Println(l.c.LightGray(l.t() + " [DEBUG] " + fmt.Sprintf(format, v...)))
 }
 
 func (l *Log) Info(format string, v ...any) {
-	fmt.Println(color.LightGray(l.t()+" [INFO]"), fmt.Sprintf(format, v...))
+	fmt.Println(l.c.LightGray(l.t()+" [INFO]"), fmt.Sprintf(format, v...))
 }
 
 func (l *Log) Fatal(err error) {
-	fmt.Fprintln(os.Stderr, color.Red(l.t()+" [FATAL] "+err.Error()))
+	fmt.Fprintln(os.Stderr, l.c.Red(l.t()+" [FATAL] "+err.Error()))
 
 	os.Exit(1)
 }

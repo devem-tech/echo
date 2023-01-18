@@ -18,7 +18,8 @@ import (
 )
 
 func main() {
-	log, cfg := logger.New(), config.New()
+	cfg := config.New()
+	log := logger.New(cfg.NoColors)
 
 	routes, err := parse(cfg.Path)
 	if err != nil {
@@ -33,7 +34,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: handler.New(log, routes, cfg.Latency),
+		Handler: handler.New(log, routes, cfg.Latency, cfg.NoColors),
 	}
 
 	go func() {
@@ -42,7 +43,7 @@ func main() {
 		}
 	}()
 
-	log.Debug("Server started (version 0.2.0)")
+	log.Debug("Server started (version 0.3.0)")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
