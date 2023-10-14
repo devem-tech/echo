@@ -45,11 +45,11 @@ func Parse(path string) (types.Routes, error) {
 }
 
 func ParseRoute(route string, content types.Content) *types.Route {
-	if route == "*" {
+	if route == types.Wildcard {
 		return &types.Route{
 			Method:  "",
+			Path:    types.Wildcard,
 			Code:    0,
-			Path:    "*",
 			Content: content,
 		}
 	}
@@ -59,35 +59,36 @@ func ParseRoute(route string, content types.Content) *types.Route {
 	if len(parts) == fullRouteLen {
 		return &types.Route{
 			Method:  parts[0],
-			Code:    integer(parts[1]),
 			Path:    parts[2],
+			Code:    integer(parts[1]),
 			Content: content,
 		}
 	}
 
 	if len(parts) == partialRouteLen {
-		i := integer(parts[0])
+		firstPart := integer(parts[0])
 
 		method := parts[0]
 		code := http.StatusOK
 
-		if i > 0 {
+		// If the first part is the code
+		if firstPart > 0 {
 			method = http.MethodGet
-			code = i
+			code = firstPart
 		}
 
 		return &types.Route{
 			Method:  method,
-			Code:    code,
 			Path:    parts[1],
+			Code:    code,
 			Content: content,
 		}
 	}
 
 	return &types.Route{
 		Method:  http.MethodGet,
-		Code:    http.StatusOK,
 		Path:    route,
+		Code:    http.StatusOK,
 		Content: content,
 	}
 }

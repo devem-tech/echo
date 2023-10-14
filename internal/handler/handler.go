@@ -8,56 +8,69 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/devem-tech/echo/internal/color"
 	"github.com/devem-tech/echo/internal/logger"
 	"github.com/devem-tech/echo/internal/types"
 )
 
 type Handler struct {
-	l  logger.Log
-	c  Color
-	r  types.Routes
-	rl time.Duration
-	v  types.Verbose
+	log             logger.Contract
+	color           color.Contract
+	routes          types.Routes
+	responseLatency time.Duration
+	prints          types.Print
 }
 
 func New(
-	log logger.Log,
-	color Color,
+	log logger.Contract,
+	color color.Contract,
 	routes types.Routes,
 	responseLatency time.Duration,
-	verbose types.Verbose,
+	prints types.Print,
 ) *Handler {
 	return &Handler{
-		l:  log,
-		c:  color,
-		r:  routes,
-		rl: responseLatency,
-		v:  verbose,
+		log:             log,
+		color:           color,
+		routes:          routes,
+		responseLatency: responseLatency,
+		prints:          prints,
 	}
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	rw := &ResponseWriter{ResponseWriter: w, code: 0}
-	i := &Interceptor{rw, r, h.l, h.c, h.v}
+	rw := ResponseWriter{
+		ResponseWriter: w,
+		code:           0,
+	}
 
-	i.Handle(h.handle)
-	h.emulateLatency()
-	h.log(rw, r)
+	interceptor := &Interceptor{
+		rw:     &rw,
+		r:      r,
+		log:    h.log,
+		color:  h.color,
+		prints: h.prints,
+	}
+
+	interceptor.handle(h.handle)
+
+	h.emulateResponseLatency()
+
+	h.output(rw, r)
 }
 
 func (h *Handler) handle(w http.ResponseWriter, r *http.Request) {
-	// Get mock response
-	res := h.r.Get(r)
-
 	// If found, return mock response
-	if res != nil {
+	if route, ok := h.routes.Get(r); ok {
 		w.Header().Set("Content-Type", "application/json")
 
-		if res.Code > 0 {
-			w.WriteHeader(res.Code)
+		if route.Code > 0 {
+			w.WriteHeader(route.Code)
 		}
 
-		if err := json.NewEncoder(w).Encode(res.Content); err != nil {
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "  ")
+
+		if err := encoder.Encode(route.Content); err != nil {
 			h.internalServerError(w, r, err)
 
 			return
@@ -67,16 +80,16 @@ func (h *Handler) handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// If wildcard is found, use forwarding
-	if forwardURL := h.r.GetForwardURL(); forwardURL != "" {
-		u, err := url.Parse(forwardURL)
+	if forwardURL, ok := h.routes.ForwardURL(); ok {
+		target, err := url.Parse(forwardURL)
 		if err != nil {
 			h.internalServerError(w, r, err)
 
 			return
 		}
 
-		r.Host = u.Host
-		httputil.NewSingleHostReverseProxy(u).ServeHTTP(w, r)
+		r.Host = target.Host
+		httputil.NewSingleHostReverseProxy(target).ServeHTTP(w, r)
 
 		return
 	}
@@ -85,27 +98,27 @@ func (h *Handler) handle(w http.ResponseWriter, r *http.Request) {
 	h.notFound(w, r)
 }
 
-func (h *Handler) emulateLatency() {
-	if h.rl <= 0 {
+func (h *Handler) emulateResponseLatency() {
+	if h.responseLatency == 0 {
 		return
 	}
 
-	time.Sleep(h.rl)
+	time.Sleep(h.responseLatency)
 }
 
-func (h *Handler) log(w *ResponseWriter, r *http.Request) {
+func (h *Handler) output(w ResponseWriter, r *http.Request) {
 	code := fmt.Sprintf("[%d]", w.code)
 
 	switch c := w.code; {
 	case c >= http.StatusOK && c < http.StatusMultipleChoices:
-		code = h.c.LightGreen(code)
+		code = h.color.LightGreen(code)
 	case c >= http.StatusMultipleChoices && c < http.StatusInternalServerError:
-		code = h.c.Yellow(code)
+		code = h.color.Yellow(code)
 	default:
-		code = h.c.LightRed(code)
+		code = h.color.LightRed(code)
 	}
 
-	h.l.Info("%s %s %s", code, r.Method, r.URL.Path)
+	h.log.Info("%s %s %s", code, r.Method, r.URL.Path)
 }
 
 func (h *Handler) notFound(w http.ResponseWriter, r *http.Request) {

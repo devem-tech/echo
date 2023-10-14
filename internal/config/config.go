@@ -1,83 +1,33 @@
+//nolint:lll
 package config
 
 import (
-	"flag"
-	"fmt"
-	"os"
-	"path/filepath"
 	"time"
+
+	"github.com/alexflint/go-arg"
 
 	"github.com/devem-tech/echo/internal/types"
 )
 
-const (
-	Version = "0.7.0"
+const Version = "0.8.0"
 
-	defaultPort = 8080
-
-	help = `Usage:
-  %s -i routes.json
-
-Version: %s
-
-Options:
-`
-)
-
-type Config struct {
-	PathToMocks     string
-	ResponseLatency time.Duration
-	Port            int
-	Verbose         types.Verbose
-	IsOutputColored bool
+type Args struct { //nolint:maligned
+	Path            string        `arg:"positional,required" help:"path to mocks"`
+	Port            int           `arg:"-p,--port"           default:"8080"                                                                                                                                           help:"port"`
+	IsOutputColored bool          `arg:"-c,--color"          default:"true"                                                                                                                                           help:"color output"`
+	ResponseLatency time.Duration `arg:"-l,--latency"        default:"0"                                                                                                                                              help:"response latency"`
+	Print           types.Print   `arg:"--print"             help:"string specifying what the output should contain:\n    'H' request headers\n    'B' request body\n    'h' response headers\n    'b' response body"`
+	IsVerbose       bool          `arg:"-v,--verbose"        help:"verbose output"`
 }
 
-func New() *Config {
-	pathToMocks := flag.String("i", "", "path to mocks")
-	responseLatency := flag.Int("l", 0, "response latency (ms)")
-	port := flag.Int("p", defaultPort, "server port")
-	v := flag.Bool("v", false, "verbose output")
-	vv := flag.Bool("vv", false, "very verbose output (response headers)")
-	isOutputColored := flag.Bool("c", true, "color output")
+func New() Args {
+	var args Args
 
-	flag.Usage = usage
-	flag.Parse()
+	arg.MustParse(&args)
 
-	validate(*pathToMocks)
-
-	return &Config{
-		PathToMocks:     *pathToMocks,
-		ResponseLatency: time.Duration(*responseLatency) * time.Millisecond,
-		Port:            *port,
-		Verbose:         verbose(*v, *vv),
-		IsOutputColored: *isOutputColored,
-	}
+	return args
 }
 
-func usage() {
-	_, _ = fmt.Fprintf(flag.CommandLine.Output(), help, filepath.Base(os.Args[0]), Version)
-
-	flag.PrintDefaults()
-}
-
-func validate(path string) {
-	if path != "" {
-		return
-	}
-
-	usage()
-
-	os.Exit(-1)
-}
-
-func verbose(v, vv bool) types.Verbose {
-	if vv {
-		return types.VerbosityVeryVerbose
-	}
-
-	if v {
-		return types.VerbosityVerbose
-	}
-
-	return types.VerbosityNormal
+func (Args) Version() string {
+	return "Echo " + Version
 }

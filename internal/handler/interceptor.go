@@ -1,84 +1,65 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"net/http/httputil"
+	"sort"
 	"strings"
 
-	"github.com/devem-tech/echo/internal/compress/gzip"
-	"github.com/devem-tech/echo/internal/compress/zlib"
+	"github.com/devem-tech/echo/internal/color"
 	"github.com/devem-tech/echo/internal/logger"
 	"github.com/devem-tech/echo/internal/types"
 )
 
 type Interceptor struct {
-	w http.ResponseWriter
-	r *http.Request
-	l logger.Log
-	c Color
-	v types.Verbose
+	rw     http.ResponseWriter
+	r      *http.Request
+	log    logger.Contract
+	color  color.Contract
+	prints types.Print
 }
 
-func (i *Interceptor) Handle(fn http.HandlerFunc) {
-	if !i.v.IsVerbose() {
-		fn(i.w, i.r)
+func (i *Interceptor) handle(fn http.HandlerFunc) {
+	if i.prints.IsEmpty() {
+		fn(i.rw, i.r)
 
 		return
 	}
 
-	r, err := httputil.DumpRequest(i.r, true)
-	if err != nil {
-		i.l.Info(">>> failed to parse request: %v", err)
+	rw := httptest.NewRecorder()
 
-		return
+	i.request()
+	fn(rw, i.r)
+	i.response(rw)
+
+	for k, v := range rw.Header() {
+		i.rw.Header()[k] = v
 	}
 
-	i.l.Info(">>> %s %s\n%s", i.r.Method, i.r.URL.Path, r)
+	i.rw.WriteHeader(rw.Code)
 
-	rec := httptest.NewRecorder()
-
-	fn(rec, i.r)
-
-	i.l.Info("<<< %d %s %s%s\n%s", rec.Code, i.r.Method, i.r.URL.Path, i.headers(rec), i.decompress(rec))
-
-	for k, v := range rec.Header() {
-		i.w.Header()[k] = v
-	}
-
-	i.w.WriteHeader(rec.Code)
-
-	_, _ = rec.Body.WriteTo(i.w)
+	_, _ = rw.Body.WriteTo(i.rw)
 }
 
-func (i *Interceptor) headers(rec *httptest.ResponseRecorder) string {
-	h := rec.Header()
-
-	if i.v < types.VerbosityVeryVerbose || len(h) == 0 {
+func (i *Interceptor) headers(headers http.Header) string {
+	if len(headers) == 0 {
 		return ""
 	}
 
-	var sb strings.Builder
+	var res strings.Builder
 
-	for k, values := range h {
-		for _, v := range values {
-			sb.WriteString(i.c.Cyan(k) + ": " + v + "\n")
+	keys := make([]string, 0, len(headers))
+	for key := range headers {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		for _, value := range headers[key] {
+			res.WriteString("\n" + i.color.Cyan(key) + ": " + value)
 		}
 	}
 
-	return "\n" + sb.String()
-}
-
-func (i *Interceptor) decompress(rw *httptest.ResponseRecorder) string {
-	body := fmt.Sprintf("%v", rw.Body)
-
-	switch rw.Header().Get("Content-Encoding") {
-	case "gzip":
-		return gzip.Decompress(body)
-	case "deflate":
-		return zlib.Decompress(body)
-	default:
-		return body
-	}
+	return res.String()
 }

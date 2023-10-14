@@ -5,26 +5,39 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/devem-tech/echo/internal/color"
 )
 
 type Logger struct {
-	c Color
+	color     color.Contract
+	isVerbose bool
 }
 
-func New(c Color) *Logger {
-	return &Logger{c: c}
+func New(
+	color color.Contract,
+	isVerbose bool,
+) *Logger {
+	return &Logger{
+		color:     color,
+		isVerbose: isVerbose,
+	}
 }
 
 func (l *Logger) Debug(format string, v ...any) {
-	fmt.Println(l.c.LightGray(l.ts() + " [DEBUG] " + fmt.Sprintf(format, v...)))
+	if !l.isVerbose {
+		return
+	}
+
+	fmt.Println(l.color.LightGray(l.ts() + " DEBUG : " + fmt.Sprintf(format, v...)))
 }
 
 func (l *Logger) Info(format string, v ...any) {
-	fmt.Println(l.c.LightGray(l.ts()+" [INFO]"), fmt.Sprintf(format, v...))
+	fmt.Println(l.color.LightGray(l.ts()+" INFO  : ") + fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) Fatal(err error) {
-	_, _ = fmt.Fprintln(os.Stderr, l.c.Red(l.ts()+" [FATAL] "+err.Error()))
+	_, _ = fmt.Fprintln(os.Stderr, l.color.Red(l.ts()+" FATAL : "+err.Error()))
 
 	os.Exit(1)
 }

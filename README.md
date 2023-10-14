@@ -12,7 +12,7 @@
 - simple json format
 - response latency
 - reverse proxy mode
-- requests and responses logs
+- request and response logs
 
 ## How to use
 
@@ -57,21 +57,23 @@ The **key** is a colon-separated string which contains 3 parts:
 ### Go
 
 ```bash
-echo -i routes.json
+echo routes.json
 ```
 
 ```bash
 Options:
-  -c    color output (default true)
-  -i string
-        path to mocks
-  -l int
-        response latency (ms)
-  -p int
-        server port (default 8080)
-  -v    verbose output
-  -vv
-        very verbose output (response headers)
+  --port PORT, -p PORT   port [default: 8080]
+  --color, -c            color output [default: true]
+  --latency LATENCY, -l LATENCY
+                         response latency [default: 0]
+  --print PRINT          string specifying what the output should contain:
+    'H' request headers
+    'B' request body
+    'h' response headers
+    'b' response body
+  --verbose, -v          verbose output
+  --help, -h             display this help and exit
+  --version              display version and exit
 ```
 
 ### Testing

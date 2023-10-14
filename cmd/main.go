@@ -15,6 +15,7 @@ import (
 	"github.com/devem-tech/echo/internal/handler"
 	"github.com/devem-tech/echo/internal/logger"
 	"github.com/devem-tech/echo/internal/routing"
+	"github.com/devem-tech/echo/internal/types"
 )
 
 const (
@@ -25,9 +26,9 @@ const (
 func main() {
 	cfg := config.New()
 	clr := color.New(cfg.IsOutputColored)
-	log := logger.New(clr)
+	log := logger.New(clr, cfg.IsVerbose)
 
-	routes, err := routing.Parse(cfg.PathToMocks)
+	routes, err := routing.Parse(cfg.Path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,8 +38,8 @@ func main() {
 
 	for _, route := range routes {
 		method := route.Method
-		if route.Path == "*" {
-			method = "*"
+		if route.Path == types.Wildcard {
+			method = types.Wildcard
 		}
 
 		log.Debug("%-6s %s", method, route.Path)
@@ -47,7 +48,7 @@ func main() {
 	//nolint:exhaustivestruct,exhaustruct
 	srv := &http.Server{
 		Addr:              fmt.Sprintf(":%d", cfg.Port),
-		Handler:           handler.New(log, clr, routes, cfg.ResponseLatency, cfg.Verbose),
+		Handler:           handler.New(log, clr, routes, cfg.ResponseLatency, cfg.Print),
 		ReadHeaderTimeout: readHeaderTimeout,
 	}
 
@@ -57,7 +58,7 @@ func main() {
 		}
 	}()
 
-	log.Debug("Server started (version %s)", config.Version)
+	log.Info("Started server (%s)", clr.Cyan(config.Version))
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)

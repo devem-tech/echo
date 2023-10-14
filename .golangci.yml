@@ -2,11 +2,18 @@ linters:
   enable-all: true
 
 linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/devem-tech/echo)
   varnamelen:
-    min-name-length: 1
+    ignore-names: [ fn, r, rw, tt, w, x ]
   depguard:
     rules:
       main:
         allow:
           - $gostd # matches all of go's standard library
           - github.com/devem-tech/echo
+          - github.com/alexflint/go-arg
+          - github.com/klauspost/compress

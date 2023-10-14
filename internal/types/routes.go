@@ -5,34 +5,38 @@ import (
 	"net/http"
 )
 
-type Content any
+const Wildcard = "*"
 
 type Route struct {
 	Method  string
-	Code    int
 	Path    string
+	Code    int
 	Content Content
 }
 
-type Routes map[string]*Route
+type Content any // json || url
 
-func (r Routes) Get(req *http.Request) *Route {
-	return r[req.Method+":"+req.URL.Path]
-}
+type Routes map[string]*Route
 
 func (r Routes) Add(route *Route) {
 	key := route.Method + ":" + route.Path
-	if route.Path == "*" {
-		key = "*"
+	if route.Path == Wildcard {
+		key = Wildcard
 	}
 
 	r[key] = route
 }
 
-func (r Routes) GetForwardURL() string {
-	if _, contains := r["*"]; contains {
-		return fmt.Sprintf("%s", r["*"].Content)
+func (r Routes) Get(req *http.Request) (*Route, bool) {
+	route, ok := r[req.Method+":"+req.URL.Path]
+
+	return route, ok
+}
+
+func (r Routes) ForwardURL() (string, bool) {
+	if route, ok := r[Wildcard]; ok {
+		return fmt.Sprintf("%s", route.Content), true
 	}
 
-	return ""
+	return "", false
 }

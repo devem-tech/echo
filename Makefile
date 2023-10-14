@@ -20,4 +20,4 @@ build:
 ## run: run the application
 .PHONY: run
 run: build
-	@${BINARY_NAME} -i ./examples/routes.json
+	@${BINARY_NAME} ./examples/routes.json
