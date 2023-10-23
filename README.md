@@ -5,7 +5,12 @@
  |___\__|_||_\___/                 
 ```
 
-**Echo** -- effortless mock server for rapid API emulation with JSON
+---
+
+![Build Status](https://github.com/devem-tech/echo/workflows/build/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/devem-tech/echo)](https://goreportcard.com/report/github.com/devem-tech/echo)
+
+**Echo** -- easy-to-use mock server that accelerates api emulation with json.
 
 ### Features
 
@@ -79,11 +84,11 @@ Options:
 ### Testing
 
 ```bash
-curl -i 127.0.0.1:8080/v1/orders/1
+curl 127.0.0.1:8080/v1/orders/1
 ```
 
 ```bash
-curl -i -X POST 127.0.0.1:8080/v1/orders
+curl -X POST 127.0.0.1:8080/v1/orders
 ```
 
 ## Reverse proxy mode

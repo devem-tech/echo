@@ -3,7 +3,6 @@ package routing
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -18,22 +17,14 @@ const (
 )
 
 func Parse(path string) (types.Routes, error) {
-	file, err := os.Open(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
-	}
-
-	defer file.Close()
-
-	bytes, err := io.ReadAll(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+		return nil, fmt.Errorf("read file: %w", err)
 	}
 
 	var routes map[string]types.Content
-
 	if err = json.Unmarshal(bytes, &routes); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal file: %w", err)
+		return nil, fmt.Errorf("unmarshal file: %w", err)
 	}
 
 	res := make(types.Routes, len(routes))
