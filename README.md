@@ -79,11 +79,11 @@ Options:
 ### Testing
 
 ```bash
-curl -i localhost:8080/v1/orders/1
+curl -i 127.0.0.1:8080/v1/orders/1
 ```
 
 ```bash
-curl -i -X POST localhost:8080/v1/orders
+curl -i -X POST 127.0.0.1:8080/v1/orders
 ```
 
 ## Reverse proxy mode
@@ -92,7 +92,7 @@ Redirect all non-defined routes to the specified host:
 
 ```json
 {
-  "*": "http://localhost:8080"
+  "*": "https://jsonplaceholder.typicode.com"
 }
 ```
 
@@ -100,10 +100,12 @@ Override a specific route:
 
 ```json
 {
-  "*": "http://localhost:8080",
-  "/v1/orders/1": {
+  "*": "https://jsonplaceholder.typicode.com",
+  "/todos/1": {
     "id": 1,
-    "status": "confirmed"
+    "userId": 1,
+    "title": "default",
+    "completed": false
   }
 }
 ```
