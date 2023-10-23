@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/alexflint/go-arg v1.4.3
-	github.com/klauspost/compress v1.17.1
+	github.com/klauspost/compress v1.17.2
 )
 
 require github.com/alexflint/go-scalar v1.2.0 // indirect

@@ -17,7 +17,7 @@ func (i *Interceptor) response(rw *httptest.ResponseRecorder) {
 		return
 	}
 
-	i.log.Info("<<< %d %s %s%s%s", rw.Code, i.r.Method, i.r.URL.Path, i.h(rw), i.b(rw))
+	i.log.Info("%s %d %s %s%s%s", i.color.LightPurple("<<<"), rw.Code, i.r.Method, i.r.URL.Path, i.h(rw), i.b(rw))
 }
 
 func (i *Interceptor) h(rw *httptest.ResponseRecorder) string {

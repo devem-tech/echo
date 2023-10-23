@@ -11,7 +11,7 @@ func (i *Interceptor) request() {
 		return
 	}
 
-	i.log.Info(">>> %s %s%s%s", i.r.Method, i.r.URL.Path, i.H(), i.B())
+	i.log.Info("%s %s %s%s%s", i.color.LightBlue(">>>"), i.r.Method, i.r.URL.Path, i.H(), i.B())
 }
 
 func (i *Interceptor) H() string {
