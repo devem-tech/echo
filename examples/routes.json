@@ -1,12 +1,12 @@
 {
   "*": "https://jsonplaceholder.typicode.com",
-  "/todos/1": {
+  "GET:/todos/1": {
     "id": 1,
     "userId": 1,
     "title": "default",
     "completed": false
   },
-  "POST:201:/v1/orders": {
+  "POST:/v1/orders:201": {
     "success": true
   },
   "GET:/v1/orders": [

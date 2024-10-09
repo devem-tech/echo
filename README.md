@@ -30,30 +30,30 @@ The json format is as follows:
 
 The **key** is a colon-separated string which contains 3 parts:
 
-| # | Part   | Required | Default |
-|---|--------|:--------:|:-------:|
-| 1 | Method |          |   GET   |
-| 2 | Code   |          |   200   |
-| 3 | Path   |    *     |         |
+| # | Part        | Required | Default |
+|---|-------------|:--------:|:-------:|
+| 1 | Method      |    *     |         |
+| 2 | Endpoint    |    *     |         |
+| 3 | Status code |          |   200   |
 
 #### Mapping example
 
-| Key              | Method | Path      | Code |
-|------------------|:------:|-----------|:----:|
-| /orders          |  GET   | /orders   | 200  |
-| 404:/orders/1    |  GET   | /orders/1 | 404  |
-| GET:/orders/2    |  GET   | /orders/2 | 200  |
-| POST:201:/orders |  POST  | /orders   | 201  |
+| Key               | Method | Endpoint  | Status code |
+|-------------------|:------:|-----------|:-----------:|
+| GET:/orders       |  GET   | /orders   |     200     |
+| POST:/orders:201  |  POST  | /orders   |     201     |
+| GET:/orders/1:404 |  GET   | /orders/1 |     404     |
+| GET:/orders/2:500 |  GET   | /orders/2 |     500     |
 
 ### Example
 
 ```json
 {
-  "/v1/orders/1": {
+  "GET:/v1/orders/1": {
     "id": 1,
     "status": "confirmed"
   },
-  "POST:201:/v1/orders": {
+  "POST:/v1/orders:201": {
     "success": true
   }
 }
@@ -106,7 +106,7 @@ Override a specific route:
 ```json
 {
   "*": "https://jsonplaceholder.typicode.com",
-  "/todos/1": {
+  "GET:/todos/1": {
     "id": 1,
     "userId": 1,
     "title": "default",

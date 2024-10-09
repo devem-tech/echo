@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sort"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -14,8 +16,7 @@ import (
 	"github.com/devem-tech/echo/internal/config"
 	"github.com/devem-tech/echo/internal/handler"
 	"github.com/devem-tech/echo/internal/logger"
-	"github.com/devem-tech/echo/internal/routing"
-	"github.com/devem-tech/echo/internal/types"
+	"github.com/devem-tech/echo/internal/model"
 )
 
 const (
@@ -28,7 +29,7 @@ func main() {
 	clr := color.New(cfg.IsOutputColored)
 	log := logger.New(clr, cfg.IsVerbose)
 
-	routes, err := routing.Parse(cfg.Path)
+	routes, err := config.ReadRouteFile(cfg.Filepath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,13 +37,8 @@ func main() {
 	log.Debug("Starting server at port %d...", cfg.Port)
 	log.Debug("Creating routes...")
 
-	for _, route := range routes {
-		method := route.Method
-		if route.Path == types.Wildcard {
-			method = types.Wildcard
-		}
-
-		log.Debug("%-6s %s", method, route.Path)
+	for _, route := range sorted(routes) {
+		log.Debug("%-6s %s", route.Request.Method, route.Request.Endpoint)
 	}
 
 	//nolint:exhaustivestruct,exhaustruct
@@ -58,7 +54,7 @@ func main() {
 		}
 	}()
 
-	log.Info("Started server (%s)", clr.Cyan(config.Version))
+	log.Info("Started server (port=%s version=%s)", clr.Purple(strconv.Itoa(cfg.Port)), clr.Purple(config.Version))
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
@@ -74,4 +70,21 @@ func main() {
 	}
 
 	log.Debug("Graceful shutdown complete")
+}
+
+func sorted(routes model.RouteMap) []model.Route {
+	res := make([]model.Route, 0, len(routes))
+	for _, route := range routes {
+		res = append(res, route)
+	}
+
+	sort.Slice(res, func(i, j int) bool {
+		if res[i].Request.Endpoint != res[j].Request.Endpoint {
+			return res[i].Request.Endpoint < res[j].Request.Endpoint
+		}
+
+		return res[i].Request.Method < res[j].Request.Method
+	})
+
+	return res
 }

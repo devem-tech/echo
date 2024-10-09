@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"time"
 
+	"github.com/devem-tech/echo/internal/model"
 	"github.com/devem-tech/echo/internal/types"
+	"github.com/devem-tech/echo/pkg/errors"
 )
 
 type Handler struct {
 	log             log
 	color           color
-	routes          types.Routes
+	routes          model.RouteMap
 	responseLatency time.Duration
 	prints          types.Print
 }
@@ -22,7 +23,7 @@ type Handler struct {
 func New(
 	log log,
 	color color,
-	routes types.Routes,
+	routes model.RouteMap,
 	responseLatency time.Duration,
 	prints types.Print,
 ) *Handler {
@@ -38,7 +39,7 @@ func New(
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rw := ResponseWriter{
 		ResponseWriter: w,
-		code:           0,
+		statusCode:     0,
 	}
 
 	interceptor := &Interceptor{
@@ -57,18 +58,23 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handle(w http.ResponseWriter, r *http.Request) {
-	// If found, return mock response
-	if route, ok := h.routes.Get(r); ok {
-		w.Header().Set("Content-Type", "application/json")
+	// If not found, return 404
+	route, ok := h.routes.Get(r)
+	if !ok {
+		h.notFound(w, r)
 
-		if route.Code > 0 {
-			w.WriteHeader(route.Code)
-		}
+		return
+	}
+
+	// Return 200
+	if route.Response.Body != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(int(route.Response.StatusCode))
 
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "  ")
 
-		if err := encoder.Encode(route.Content); err != nil {
+		if err := encoder.Encode(*route.Response.Body); err != nil {
 			h.internalServerError(w, r, err)
 
 			return
@@ -77,23 +83,15 @@ func (h *Handler) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// If wildcard is found, use forwarding
-	if forwardURL, ok := h.routes.ForwardURL(); ok {
-		target, err := url.Parse(forwardURL)
-		if err != nil {
-			h.internalServerError(w, r, err)
-
-			return
-		}
-
-		r.Host = target.Host
-		httputil.NewSingleHostReverseProxy(target).ServeHTTP(w, r)
+	// Reverse proxy
+	if route.Response.ProxyURL != nil {
+		r.Host = route.Response.ProxyURL.Host
+		httputil.NewSingleHostReverseProxy(route.Response.ProxyURL).ServeHTTP(w, r)
 
 		return
 	}
 
-	// If not found, return 404 response
-	h.notFound(w, r)
+	h.internalServerError(w, r, errors.New("no response found"))
 }
 
 func (h *Handler) emulateResponseLatency() {
@@ -105,9 +103,9 @@ func (h *Handler) emulateResponseLatency() {
 }
 
 func (h *Handler) output(w ResponseWriter, r *http.Request) {
-	code := fmt.Sprintf("[%d]", w.code)
+	code := fmt.Sprintf("[%d]", w.statusCode)
 
-	switch c := w.code; {
+	switch c := w.statusCode; {
 	case c >= http.StatusOK && c < http.StatusMultipleChoices:
 		code = h.color.LightGreen(code)
 	case c >= http.StatusMultipleChoices && c < http.StatusInternalServerError:

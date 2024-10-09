@@ -11,8 +11,7 @@ linters-settings:
       - prefix(github.com/devem-tech/echo)
   varnamelen:
     ignore-names:
-      - x
-      - fn
+      - x, sb, ok, fn
       - r, w, rw
 
 issues:

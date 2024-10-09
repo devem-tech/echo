@@ -8,11 +8,11 @@ import (
 	"github.com/devem-tech/echo/internal/types"
 )
 
-const Version = "0.8.0"
+const Version = "0.9.0"
 
 //nolint:maligned,lll
 type Args struct {
-	Path            string        `arg:"positional,required" help:"path to mocks"`
+	Filepath        string        `arg:"positional,required" help:"path to route file"`
 	Port            int           `arg:"-p,--port"           default:"8080"                                                                                                                                           help:"port"`
 	IsOutputColored bool          `arg:"-c,--color"          default:"true"                                                                                                                                           help:"color output"`
 	ResponseLatency time.Duration `arg:"-l,--latency"        default:"0"                                                                                                                                              help:"response latency"`
