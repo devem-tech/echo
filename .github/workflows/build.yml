@@ -1,0 +1,22 @@
+name: build
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '^1.23'
+          cache: false
+
+      - run: go version
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+
+      - name: Run tests
+        run: go test -cover ./...
